@@ -44,8 +44,8 @@ void setup() {
 
   enableA = true;
   enableB = true;
-  stepA = 0b111;
-  stepB = 0b111;
+  stepA = 0b011;  //If both on max 71% power
+  stepB = 0b011;  //If both on max 71% power
   decayA = 0;
   decayB = 0;
 }
