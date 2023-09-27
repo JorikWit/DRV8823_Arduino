@@ -1,8 +1,7 @@
 #define SDI MOSI  //Data
 //#define SCK SCK //Data is shifted on rising edge
 #define CS A5     //HIGH when data is transferd
-#define STB A0 //Pulse LOW -> HIGH. When data is send and a CS is LOW again
-
+#define STB A0 //Pulse LOW -> HIGH. When data is send and a CS is LOW aga+in
 #define RST A2    //Low to disable Stepper motor
 #define SLEEP A3  //Turn high?
 
@@ -24,7 +23,6 @@ void setup() {
   pinMode(SCK, OUTPUT);
   pinMode(CS, OUTPUT);
   pinMode(STB, OUTPUT);
-
   pinMode(RST, OUTPUT);
   pinMode(SLEEP, OUTPUT);
 
@@ -45,22 +43,39 @@ void setup() {
 
 double stepInMicrostepsArray = 4.0;   //there are 4 "fulls steps" in array 
 double degreesPerStep = 1.8;          //Motor
-double rotDegree = 180.0;             //Rotation of the motor
-
-double rotationTimeSec = 3.5;        //time can be a bit long. Communication delay
+double rotDegree = 3600.0;            //Rotation of the motor
+double rotationTimeSec = .250;        //time can be a bit longer. Communication delay
 
 void loop() {
   for (int i = 0; i < ((rotDegree / degreesPerStep / stepInMicrostepsArray) * amountOfSteps); i++) {
-    delayMicroseconds((rotationTimeSec * 1000000) / ((rotDegree / degreesPerStep / stepInMicrostepsArray) * amountOfSteps));
     sendBits(microsteps[i % amountOfSteps]);
+    delayMicroseconds((rotationTimeSec * 1000000) / ((rotDegree / degreesPerStep / stepInMicrostepsArray) * amountOfSteps));
   }
-  delay(1000);
-
+  delay(50);
+  pinMode(SLEEP, HIGH);
+  delay(950);
+  pinMode(SLEEP, LOW);
   for (int i = ((rotDegree / degreesPerStep / stepInMicrostepsArray) * amountOfSteps); i > -1; i--) {
-    delayMicroseconds((rotationTimeSec * 1000000) / ((rotDegree / degreesPerStep / stepInMicrostepsArray) * amountOfSteps));
     sendBits(microsteps[i % amountOfSteps]);
+    delayMicroseconds((rotationTimeSec * 1000000.0) / ((rotDegree / degreesPerStep / stepInMicrostepsArray) * amountOfSteps));
   }
-  delay(1000);
+  delay(50);
+  pinMode(SLEEP, HIGH);
+  delay(950);
+  pinMode(SLEEP, LOW);
+}
+
+void sendMotorBits(uint16_t data) {
+    digitalWrite(CS, HIGH);
+    for (uint8_t i = 0; i < 16 ; i++){
+      int mask = 1 << i;
+      digitalWrite(SDI, data & mask ? 1 : 0);
+      digitalWrite(SCK, HIGH);
+      digitalWrite(SCK, LOW);
+    }
+    digitalWrite(CS, LOW);
+    digitalWrite(STB, HIGH);
+    digitalWrite(STB, LOW);   
 }
 
 void printBits(uint16_t data) {
@@ -70,18 +85,4 @@ void printBits(uint16_t data) {
     if (i % 4 == 0) Serial.print(" ");
   }
   Serial.println();
-}
-
-void sendBits(uint16_t data) {
-    digitalWrite(CS, HIGH);
-    for (uint8_t i = 0; i < 16 ; i++){
-      int mask = 1 << i;
-      digitalWrite(SDI, data & mask ? 1 : 0);
-      digitalWrite(SCK, HIGH);
-      digitalWrite(SCK, LOW);
-
-    }
-    digitalWrite(CS, LOW);
-    digitalWrite(STB, HIGH);
-    digitalWrite(STB, LOW);   
 }
